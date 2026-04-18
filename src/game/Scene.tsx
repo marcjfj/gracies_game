@@ -1,23 +1,25 @@
-import { Environment, Sky } from "@react-three/drei";
+import { Stars } from "@react-three/drei";
 
 export function Scene() {
   return (
     <>
-      <Sky sunPosition={[20, 30, 10]} turbidity={6} rayleigh={1.5} />
-      <Environment preset="sunset" />
-      <ambientLight intensity={0.4} />
+      <Stars radius={250} depth={90} count={6000} factor={4} saturation={0.2} fade speed={0.2} />
+      <ambientLight intensity={0.22} color="#6a78a3" />
+      <hemisphereLight args={["#b084e6", "#140a22", 0.4]} />
       <directionalLight
-        position={[15, 20, 10]}
-        intensity={1.2}
+        position={[25, 35, 15]}
+        intensity={1.35}
+        color="#eaeeff"
         castShadow
         shadow-mapSize={[2048, 2048]}
-        shadow-camera-left={-20}
-        shadow-camera-right={20}
-        shadow-camera-top={20}
-        shadow-camera-bottom={-20}
+        shadow-camera-left={-50}
+        shadow-camera-right={50}
+        shadow-camera-top={50}
+        shadow-camera-bottom={-50}
         shadow-camera-near={0.5}
-        shadow-camera-far={60}
+        shadow-camera-far={140}
       />
+      <directionalLight position={[-30, 18, -20]} intensity={0.35} color="#8a6bd9" />
     </>
   );
 }

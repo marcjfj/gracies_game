@@ -9,7 +9,7 @@ type Props = {
   lerp?: number;
 };
 
-export function FollowCamera({ target, offset = [0, 6, 10], lerp = 0.08 }: Props) {
+export function FollowCamera({ target, offset = [0, 7, 12], lerp = 0.08 }: Props) {
   const { camera } = useThree();
   const desired = useRef(new Vector3());
   const lookAt = useRef(new Vector3());

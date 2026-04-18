@@ -1,4 +1,4 @@
-import { CuboidCollider, RigidBody, useRapier, type RapierRigidBody } from "@react-three/rapier";
+import { CapsuleCollider, RigidBody, useRapier, type RapierRigidBody } from "@react-three/rapier";
 import { useKeyboardControls } from "@react-three/drei";
 import { useFrame, useThree } from "@react-three/fiber";
 import { forwardRef, useImperativeHandle, useRef, useState } from "react";
@@ -7,14 +7,17 @@ import type { ControlName } from "../controls";
 import { Poodle, type PoodleAnim } from "./Poodle";
 
 const MOVE_SPEED = 5;
-const JUMP_VELOCITY = 9;
-const GROUND_RAY_LENGTH = 0.15;
+const JUMP_VELOCITY = 13;
+const GROUND_RAY_LENGTH = 0.7;
+const COYOTE_TIME = 0.15;
+const RISE_VEL_THRESHOLD = 4.0;
+const FALL_VEL_THRESHOLD = -3.0;
 
 const POODLE_SCALE = 0.04;
 const POODLE_Y_OFFSET = 1.35;
-const POODLE_HALF_X = 0.59;
-const POODLE_HALF_Y = 1.25;
-const POODLE_HALF_Z = 1.35;
+const POODLE_RADIUS = 0.55;
+const POODLE_CYL_HALF_HEIGHT = 0.7;
+const POODLE_HALF_Y = POODLE_CYL_HALF_HEIGHT + POODLE_RADIUS;
 const POODLE_AIR_LIFT = 0.9;
 
 const forward = new Vector3();
@@ -35,12 +38,20 @@ export const Player = forwardRef<PlayerHandle, { spawn?: [number, number, number
 
     const [anim, setAnim] = useState<PoodleAnim>("idle");
     const animRef = useRef<PoodleAnim>("idle");
+    const coyoteTimer = useRef(0);
     const inAir = anim === "jump" || anim === "jumpFall";
     const colliderCenterY = POODLE_HALF_Y + (inAir ? POODLE_AIR_LIFT : 0);
 
-    useFrame(() => {
+    useFrame((_, dt) => {
       const body = rb.current;
       if (!body) return;
+
+      if (body.translation().y < -15) {
+        body.setTranslation({ x: spawn[0], y: spawn[1], z: spawn[2] }, true);
+        body.setLinvel({ x: 0, y: 0, z: 0 }, true);
+        body.setAngvel({ x: 0, y: 0, z: 0 }, true);
+        return;
+      }
 
       const input = get();
 
@@ -68,13 +79,25 @@ export const Player = forwardRef<PlayerHandle, { spawn?: [number, number, number
       const groundRayYOffset = animRef.current === "jump" || animRef.current === "jumpFall" ? POODLE_AIR_LIFT : 0;
       const grounded = isGrounded(body, world, rapier, groundRayYOffset);
 
+      if (grounded) {
+        coyoteTimer.current = COYOTE_TIME;
+      } else {
+        coyoteTimer.current = Math.max(0, coyoteTimer.current - dt);
+      }
+      const airborne = coyoteTimer.current <= 0;
+
+      let justJumped = false;
       if (input.jump && grounded) {
         body.setLinvel({ x: vel.x, y: JUMP_VELOCITY, z: vel.z }, true);
+        coyoteTimer.current = 0;
+        justJumped = true;
       }
 
       let next: PoodleAnim;
-      if (!grounded) {
-        next = vel.y > 0.5 ? "jump" : "jumpFall";
+      if (justJumped || vel.y > RISE_VEL_THRESHOLD) {
+        next = "jump";
+      } else if (airborne && vel.y < FALL_VEL_THRESHOLD) {
+        next = "jumpFall";
       } else if (moving) {
         next = "run";
       } else {
@@ -97,7 +120,7 @@ export const Player = forwardRef<PlayerHandle, { spawn?: [number, number, number
         angularDamping={1}
         ccd
       >
-        <CuboidCollider args={[POODLE_HALF_X, POODLE_HALF_Y, POODLE_HALF_Z]} position={[0, colliderCenterY, 0]} />
+        <CapsuleCollider args={[POODLE_CYL_HALF_HEIGHT, POODLE_RADIUS]} position={[0, colliderCenterY, 0]} />
         <Poodle animation={anim} yOffset={POODLE_Y_OFFSET} scale={POODLE_SCALE} />
       </RigidBody>
     );

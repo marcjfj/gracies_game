@@ -1,0 +1,1 @@
+{"root":["./src/app.tsx","./src/controls.ts","./src/main.tsx","./src/game/crystals.tsx","./src/game/followcamera.tsx","./src/game/game.tsx","./src/game/ground.tsx","./src/game/platforms.tsx","./src/game/player.tsx","./src/game/poodle.tsx","./src/game/scene.tsx"],"version":"5.9.3"}

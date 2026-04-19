@@ -22,7 +22,6 @@ body,
 }
 
 .app.is-touch {
-  touch-action: none;
   -webkit-user-select: none;
   user-select: none;
   -webkit-touch-callout: none;
@@ -496,7 +495,10 @@ canvas {
 .start-screen {
   position: absolute;
   inset: 0;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
   background:
     radial-gradient(ellipse at 20% 10%, #1a2b6b 0%, transparent 55%),
     radial-gradient(ellipse at 85% 85%, #3a0d4f 0%, transparent 55%),
@@ -504,6 +506,13 @@ canvas {
   z-index: 10;
   user-select: none;
   animation: screen-fade-in 600ms ease-out;
+}
+
+.start-screen > .nebula,
+.start-screen > .stars,
+.start-screen > .shooting-star,
+.start-screen > .planet {
+  position: fixed;
 }
 
 @keyframes screen-fade-in {
@@ -669,13 +678,13 @@ canvas {
 .start-content {
   position: relative;
   z-index: 2;
-  height: 100%;
+  min-height: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   text-align: center;
-  padding: 20px;
+  padding: 24px 20px 36px;
 }
 
 .title-eyebrow {
@@ -689,17 +698,20 @@ canvas {
 }
 
 .title {
-  font-size: clamp(56px, 12vw, 160px);
-  line-height: 0.95;
+  font-size: clamp(40px, 8vw, 104px);
+  line-height: 1;
   margin: 0;
   font-weight: 800;
   letter-spacing: -0.02em;
   display: flex;
-  flex-direction: column;
-  gap: 0;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  justify-content: center;
+  gap: 0.28em;
+  white-space: nowrap;
 }
 .title-word {
-  display: block;
+  display: inline-block;
   background: linear-gradient(180deg, #ffffff 0%, #bcd9ff 45%, #6a8fff 100%);
   -webkit-background-clip: text;
   background-clip: text;
@@ -1569,4 +1581,123 @@ canvas {
   line-height: 1.55;
   opacity: 0;
   animation: fade-up 900ms 500ms ease-out forwards;
+}
+
+/* =========================
+   Start screen — responsive
+   ========================= */
+
+@media (max-height: 820px), (max-width: 720px) {
+  .start-content {
+    padding: 18px 16px 28px;
+  }
+  .title-eyebrow {
+    margin-bottom: 10px;
+  }
+  .title {
+    font-size: clamp(34px, 7vw, 72px);
+  }
+  .tagline {
+    margin: 12px 0 22px;
+    font-size: clamp(13px, 1.4vw, 16px);
+  }
+  .character-picker,
+  .map-picker {
+    margin-bottom: 20px;
+    gap: 10px;
+  }
+  .character-grid,
+  .map-grid {
+    gap: 12px;
+  }
+  .character-card {
+    width: 148px;
+  }
+  .character-card-canvas {
+    height: 132px;
+  }
+  .map-card {
+    width: 184px;
+  }
+  .map-card-art {
+    height: 92px;
+  }
+  .controls-hint {
+    margin-top: 22px;
+    flex-wrap: wrap;
+    justify-content: center;
+    row-gap: 6px;
+  }
+  .planet-ring {
+    width: 150px;
+    height: 150px;
+    right: 4vw;
+    top: 6vh;
+  }
+  .planet-small {
+    width: 64px;
+    height: 64px;
+    left: 4vw;
+    bottom: 8vh;
+  }
+}
+
+@media (max-width: 520px) {
+  .character-grid,
+  .map-grid {
+    gap: 10px;
+  }
+  .character-card {
+    width: 132px;
+  }
+  .character-card-canvas {
+    height: 118px;
+  }
+  .character-card-info {
+    padding: 10px 10px 12px;
+  }
+  .character-card-name {
+    font-size: 13px;
+  }
+  .character-card-blurb {
+    font-size: 10.5px;
+  }
+  .map-card {
+    width: calc(50% - 6px);
+    max-width: 200px;
+  }
+  .map-card-art {
+    height: 84px;
+  }
+  .controls-hint {
+    font-size: 11px;
+    letter-spacing: 0.04em;
+  }
+  .planet-ring,
+  .planet-small {
+    display: none;
+  }
+}
+
+@media (max-height: 640px) {
+  .start-content {
+    justify-content: flex-start;
+    padding-top: 20px;
+  }
+  .title {
+    font-size: clamp(28px, 6vw, 52px);
+  }
+  .tagline {
+    display: none;
+  }
+  .character-picker,
+  .map-picker {
+    margin-bottom: 16px;
+  }
+  .character-card-canvas {
+    height: 104px;
+  }
+  .map-card-art {
+    height: 72px;
+  }
 }

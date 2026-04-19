@@ -1,11 +1,15 @@
 import { Canvas } from "@react-three/fiber";
 import { KeyboardControls, type KeyboardControlsEntry } from "@react-three/drei";
 import { Physics, type RapierRigidBody } from "@react-three/rapier";
-import { Suspense, useCallback, useMemo, useRef, useState } from "react";
+import {
+  Suspense,
+  useCallback,
+  useMemo,
+  useRef,
+  useState,
+  type PointerEvent as ReactPointerEvent,
+} from "react";
 import { controlMap, type ControlName } from "../controls";
-import { Scene } from "./Scene";
-import { Ground } from "./Ground";
-import { Platforms } from "./Platforms";
 import { Player } from "./Player";
 import { FollowCamera } from "./FollowCamera";
 import { Crystals } from "./Crystals";
@@ -15,13 +19,15 @@ import { SpawnPlatform } from "./SpawnPlatform";
 import { Laser } from "./Laser";
 import { Enemies } from "./Enemies";
 import { requestPointerLock } from "../mouseLook";
+import { MAPS, type MapId } from "./Maps";
 
 const debug = new URLSearchParams(window.location.search).has("debug");
 
-const SPAWN: [number, number, number] = [0, 6, 0];
+const SPAWN_Y_LIFT = 6;
 const SPAWN_PLATFORM_OFFSET_Y = 0.5;
 
 type Props = {
+  map: MapId;
   collected: ReadonlySet<number>;
   onCollect: (id: number) => void;
   character: CharacterId;
@@ -31,13 +37,24 @@ type Props = {
 
 type Burst = { key: number; position: [number, number, number] };
 
-export function Game({ collected, onCollect, character, onPlayerDamage, muted }: Props) {
+export function Game({
+  map,
+  collected,
+  onCollect,
+  character,
+  onPlayerDamage,
+  muted,
+}: Props) {
   const playerRef = useRef<RapierRigidBody>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const map = useMemo<KeyboardControlsEntry<ControlName>[]>(
+  const keyMap = useMemo<KeyboardControlsEntry<ControlName>[]>(
     () => controlMap.map((c) => ({ name: c.name, keys: [...c.keys] })),
     [],
   );
+
+  const cfg = MAPS[map];
+  const spawn: [number, number, number] = cfg.spawn ?? [0, SPAWN_Y_LIFT, 0];
+  const showSpawnPlatform = cfg.showSpawnPlatform ?? true;
 
   const [bursts, setBursts] = useState<Burst[]>([]);
   const burstIdRef = useRef(0);
@@ -55,10 +72,16 @@ export function Game({ collected, onCollect, character, onPlayerDamage, muted }:
     setBursts((prev) => prev.filter((b) => b.key !== key));
   }, []);
 
-  const handlePointerDown = useCallback(() => {
+  const handlePointerDown = useCallback((e: ReactPointerEvent) => {
+    if (e.pointerType === "touch") return;
     const canvas = containerRef.current?.querySelector("canvas");
     if (canvas) requestPointerLock(canvas);
   }, []);
+
+  const MapGround = cfg.Ground;
+  const MapPlatforms = cfg.Platforms;
+  const MapScene = cfg.Scene;
+  const MapHazards = cfg.Hazards;
 
   return (
     <div
@@ -66,22 +89,39 @@ export function Game({ collected, onCollect, character, onPlayerDamage, muted }:
       onPointerDown={handlePointerDown}
       style={{ position: "absolute", inset: 0 }}
     >
-      <KeyboardControls map={map}>
+      <KeyboardControls map={keyMap}>
         <Canvas shadows camera={{ fov: 60, position: [0, 7, 12], near: 0.1, far: 500 }}>
-          <color attach="background" args={["#0c0f1f"]} />
-          <fog attach="fog" args={["#1a1a33", 110, 300]} />
+          <color attach="background" args={[cfg.background]} />
+          <fog attach="fog" args={[cfg.fogColor, cfg.fogNear, cfg.fogFar]} />
           <Suspense fallback={null}>
-            <Scene />
+            <MapScene />
             <Physics debug={debug} gravity={[0, -20, 0]}>
-              <Ground />
-              <Platforms />
-              <Crystals collected={collected} onCollect={handleCollect} />
-              <SpawnPlatform
-                position={[SPAWN[0], SPAWN[1] - SPAWN_PLATFORM_OFFSET_Y, SPAWN[2]]}
+              <MapGround />
+              <MapPlatforms />
+              <Crystals
+                spawns={cfg.crystalSpawns}
+                collected={collected}
+                onCollect={handleCollect}
+                scale={cfg.crystalScale}
               />
-              <Enemies playerRef={playerRef} onPlayerDamage={onPlayerDamage} />
-              <Player ref={playerRef} spawn={SPAWN} character={character} />
+              {showSpawnPlatform && (
+                <SpawnPlatform
+                  position={[spawn[0], spawn[1] - SPAWN_PLATFORM_OFFSET_Y, spawn[2]]}
+                />
+              )}
+              <Enemies
+                spawns={cfg.enemySpawns}
+                playerRef={playerRef}
+                onPlayerDamage={onPlayerDamage}
+              />
+              <Player ref={playerRef} spawn={spawn} character={character} />
               <Laser playerRef={playerRef} muted={muted} />
+              {MapHazards && (
+                <MapHazards
+                  playerRef={playerRef}
+                  onPlayerDamage={onPlayerDamage}
+                />
+              )}
             </Physics>
             {bursts.map((b) => (
               <CollectBurst

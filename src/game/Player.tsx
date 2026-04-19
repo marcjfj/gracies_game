@@ -11,6 +11,7 @@ import { Vector3 } from "three";
 import type { ControlName } from "../controls";
 import { readGamepad } from "../gamepad";
 import { isMouseFiring } from "../mouseLook";
+import { readTouchInput } from "../touch";
 import { Character, type CharacterAnim, type CharacterId } from "./Character";
 
 const MOVE_SPEED = 12;
@@ -74,6 +75,7 @@ export const Player = forwardRef<PlayerHandle, PlayerProps>(function Player(
     right.set(-forward.z, 0, forward.x);
 
     const gp = readGamepad();
+    const tc = readTouchInput();
 
     move.set(0, 0, 0);
     if (input.forward) move.add(forward);
@@ -83,6 +85,10 @@ export const Player = forwardRef<PlayerHandle, PlayerProps>(function Player(
     if (gp.connected) {
       move.addScaledVector(forward, -gp.moveY);
       move.addScaledVector(right, gp.moveX);
+    }
+    if (tc.moveX !== 0 || tc.moveY !== 0) {
+      move.addScaledVector(forward, -tc.moveY);
+      move.addScaledVector(right, tc.moveX);
     }
     const moving = move.lengthSq() > 0;
     if (moving) {
@@ -94,7 +100,8 @@ export const Player = forwardRef<PlayerHandle, PlayerProps>(function Player(
     const vel = body.linvel();
     body.setLinvel({ x: move.x, y: vel.y, z: move.z }, true);
 
-    const firing = input.fire || (gp.connected && gp.fire) || isMouseFiring();
+    const firing =
+      input.fire || (gp.connected && gp.fire) || isMouseFiring() || tc.fire;
     if (firing && (forward.x !== 0 || forward.z !== 0)) {
       const yaw = Math.atan2(forward.x, forward.z);
       body.setRotation(
@@ -123,7 +130,7 @@ export const Player = forwardRef<PlayerHandle, PlayerProps>(function Player(
     const airborne = coyoteTimer.current <= 0;
 
     let justJumped = false;
-    const jumpPressed = input.jump || (gp.connected && gp.jump);
+    const jumpPressed = input.jump || (gp.connected && gp.jump) || tc.jump;
     if (jumpPressed && grounded) {
       body.setLinvel({ x: vel.x, y: JUMP_VELOCITY, z: vel.z }, true);
       coyoteTimer.current = 0;

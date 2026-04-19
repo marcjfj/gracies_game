@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Game } from "./game/Game";
-import { CRYSTAL_COUNT } from "./game/Crystals";
+import { getMapCrystalCount, type MapId } from "./game/Maps";
 import type { CharacterId } from "./game/Character";
 import { StartScreen } from "./ui/StartScreen";
 import { WinScreen } from "./ui/WinScreen";
@@ -8,19 +8,25 @@ import { LostScreen } from "./ui/LostScreen";
 import { useBackgroundMusic } from "./ui/useBackgroundMusic";
 import { useSoundEffect } from "./ui/useSoundEffect";
 import { MusicToggle } from "./ui/MusicToggle";
+import { TouchControls } from "./ui/TouchControls";
 import { CROSSHAIR_TOP_PERCENT } from "./crosshair";
 import { emitPlayerHitFlash } from "./playerFlash";
+import { isTouchDevice } from "./touch";
 
 type Phase = "start" | "playing" | "won" | "lost";
 
 const MAX_HEALTH = 100;
+const TOUCH = isTouchDevice();
 
 export default function App() {
   const [phase, setPhase] = useState<Phase>("start");
   const [collected, setCollected] = useState<ReadonlySet<number>>(() => new Set());
   const [character, setCharacter] = useState<CharacterId>("poodle");
+  const [selectedMap, setSelectedMap] = useState<MapId>("asteroid");
+  const [activeMap, setActiveMap] = useState<MapId>("asteroid");
   const [health, setHealth] = useState(MAX_HEALTH);
   const [gameKey, setGameKey] = useState(0);
+  const crystalTotal = useMemo(() => getMapCrystalCount(activeMap), [activeMap]);
   const healthRef = useRef(MAX_HEALTH);
   healthRef.current = health;
 
@@ -52,10 +58,10 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    if (phase === "playing" && collected.size >= CRYSTAL_COUNT) {
+    if (phase === "playing" && collected.size >= crystalTotal) {
       setPhase("won");
     }
-  }, [collected, phase]);
+  }, [collected, phase, crystalTotal]);
 
   useEffect(() => {
     if (phase === "playing" && health <= 0) {
@@ -78,10 +84,11 @@ export default function App() {
   const startGame = useCallback(() => {
     setCollected(new Set());
     setHealth(MAX_HEALTH);
+    setActiveMap(selectedMap);
     setGameKey((k) => k + 1);
     setPhase("playing");
     music.play();
-  }, [music]);
+  }, [music, selectedMap]);
 
   const returnToStart = useCallback(() => {
     setPhase("start");
@@ -90,14 +97,15 @@ export default function App() {
   }, []);
 
   const collectedCount = collected.size;
-  const remaining = CRYSTAL_COUNT - collectedCount;
+  const remaining = crystalTotal - collectedCount;
 
   return (
-    <div className="app">
+    <div className={`app${TOUCH ? " is-touch" : ""}`}>
       {phase !== "start" && (
         <>
           <Game
             key={gameKey}
+            map={activeMap}
             collected={collected}
             onCollect={handleCollect}
             character={character}
@@ -127,7 +135,7 @@ export default function App() {
                 {collectedCount}
               </span>
               <span className="hud-divider">/</span>
-              <span className="hud-total">{CRYSTAL_COUNT}</span>
+              <span className="hud-total">{crystalTotal}</span>
               <span className="hud-remaining">
                 {remaining === 0 ? "complete" : `${remaining} left`}
               </span>
@@ -135,7 +143,7 @@ export default function App() {
             <div className="hud-progress" aria-hidden>
               <div
                 className="hud-progress-fill"
-                style={{ width: `${(collectedCount / CRYSTAL_COUNT) * 100}%` }}
+                style={{ width: `${(collectedCount / crystalTotal) * 100}%` }}
               />
               <div className="hud-progress-pulse" key={pulseTick} />
             </div>
@@ -158,6 +166,8 @@ export default function App() {
           onStart={startGame}
           selectedCharacter={character}
           onSelectCharacter={setCharacter}
+          selectedMap={selectedMap}
+          onSelectMap={setSelectedMap}
         />
       )}
       {phase === "won" && <WinScreen onBackToStart={returnToStart} />}
@@ -167,6 +177,7 @@ export default function App() {
       {phase !== "start" && (
         <MusicToggle muted={music.muted} onToggle={music.toggleMute} />
       )}
+      {phase === "playing" && TOUCH && <TouchControls />}
     </div>
   );
 }

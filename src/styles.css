@@ -21,6 +21,117 @@ body,
   position: relative;
 }
 
+.app.is-touch {
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
+.app.is-touch .music-toggle {
+  top: 14px;
+  right: 14px;
+  bottom: auto;
+}
+
+.touch-look {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  touch-action: none;
+  background: transparent;
+}
+
+.touch-joy {
+  position: absolute;
+  left: 28px;
+  bottom: 28px;
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  z-index: 6;
+  touch-action: none;
+  background:
+    radial-gradient(circle at 50% 45%, rgba(140, 170, 255, 0.12) 0%, rgba(12, 10, 30, 0.45) 70%);
+  border: 1px solid rgba(160, 190, 255, 0.28);
+  box-shadow:
+    0 8px 28px rgba(0, 0, 0, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.touch-joy-knob {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  background: linear-gradient(135deg, #6a8fff 0%, #a04dff 55%, #ff4da6 100%);
+  box-shadow:
+    0 8px 24px rgba(160, 80, 255, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.35);
+  pointer-events: none;
+}
+
+.touch-btn {
+  position: absolute;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border-radius: 50%;
+  border: 1px solid rgba(180, 200, 255, 0.35);
+  color: #f4efe5;
+  font: inherit;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  cursor: pointer;
+  touch-action: none;
+  z-index: 6;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  transition: transform 140ms ease, box-shadow 140ms ease, filter 140ms ease;
+  user-select: none;
+}
+
+.touch-btn-label {
+  font-size: 13px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.touch-btn-fire {
+  right: 28px;
+  bottom: 28px;
+  width: 96px;
+  height: 96px;
+  background:
+    radial-gradient(circle at 30% 30%, #ff9ac4 0%, #ff4da6 45%, #a04dff 100%);
+  box-shadow:
+    0 10px 32px rgba(255, 80, 180, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+.touch-btn-jump {
+  right: 132px;
+  bottom: 70px;
+  width: 76px;
+  height: 76px;
+  background:
+    radial-gradient(circle at 30% 30%, #a9d0ff 0%, #6a8fff 55%, #4a3bb6 100%);
+  box-shadow:
+    0 8px 24px rgba(90, 120, 255, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.28);
+}
+
+.touch-btn:active {
+  transform: scale(0.94);
+  filter: brightness(1.2);
+}
+
 canvas {
   display: block;
   outline: none;
@@ -746,6 +857,363 @@ canvas {
 }
 
 .character-card.is-selected .character-card-glow {
+  opacity: 0.55;
+  animation: pulse-glow 2.8s ease-in-out infinite;
+}
+
+/* Active-row dim: non-focused pickers fade slightly so player can see focus */
+.character-picker,
+.map-picker {
+  transition: opacity 220ms ease, transform 220ms ease;
+}
+.character-picker:not(.is-active),
+.map-picker:not(.is-active) {
+  opacity: 0.78;
+}
+.character-picker.is-active .character-picker-label,
+.map-picker.is-active .character-picker-label {
+  color: #e0e6ff;
+  text-shadow: 0 0 12px rgba(180, 200, 255, 0.35);
+}
+
+/* Map picker */
+.map-picker {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 32px;
+  opacity: 0;
+  animation: fade-up 900ms 780ms ease-out forwards;
+}
+
+.map-grid {
+  display: flex;
+  gap: 18px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.map-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  width: 220px;
+  padding: 0;
+  background:
+    linear-gradient(180deg, rgba(30, 22, 64, 0.65) 0%, rgba(10, 8, 24, 0.85) 100%);
+  border: 1px solid rgba(140, 170, 255, 0.22);
+  border-radius: 16px;
+  color: #e8ecff;
+  cursor: pointer;
+  overflow: hidden;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow:
+    0 10px 30px rgba(0, 0, 0, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
+  font: inherit;
+}
+
+.map-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(180, 200, 255, 0.4);
+  box-shadow:
+    0 14px 40px rgba(60, 40, 120, 0.55),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.map-card.is-selected {
+  border-color: rgba(170, 210, 255, 0.75);
+  box-shadow:
+    0 18px 54px rgba(80, 160, 255, 0.45),
+    0 0 0 1px rgba(210, 230, 255, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  transform: translateY(-2px);
+}
+
+.map-card-art {
+  position: relative;
+  height: 110px;
+  width: 100%;
+  overflow: hidden;
+}
+
+.map-art--asteroid {
+  background:
+    radial-gradient(ellipse at 50% 110%, #3a1e5e 0%, transparent 60%),
+    linear-gradient(180deg, #0f1430 0%, #1d0b35 100%);
+}
+
+.map-art--ice_planet {
+  background:
+    radial-gradient(ellipse at 50% 110%, #5388c2 0%, transparent 55%),
+    linear-gradient(180deg, #091a36 0%, #1a3a6a 60%, #4a7eb5 100%);
+}
+
+.map-art--fire_planet {
+  background:
+    radial-gradient(ellipse at 50% 110%, #ff5a10 0%, transparent 55%),
+    linear-gradient(180deg, #200503 0%, #4a0e06 55%, #94220a 100%);
+}
+
+.map-art-heat-haze {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse at 35% 80%, rgba(255, 140, 40, 0.35) 0%, transparent 55%),
+    radial-gradient(ellipse at 70% 90%, rgba(255, 90, 10, 0.3) 0%, transparent 50%);
+  filter: blur(6px);
+  mix-blend-mode: screen;
+  pointer-events: none;
+}
+
+.map-art-volcano {
+  position: absolute;
+  bottom: 0;
+  width: 0;
+  height: 0;
+  border-left: 60px solid transparent;
+  border-right: 60px solid transparent;
+}
+.map-art-volcano-back {
+  left: 8%;
+  border-left-width: 48px;
+  border-right-width: 48px;
+  border-bottom: 62px solid #3a0f08;
+  filter: drop-shadow(0 -2px 6px rgba(255, 100, 40, 0.35));
+  opacity: 0.85;
+}
+.map-art-volcano-front {
+  left: 42%;
+  border-bottom: 78px solid #521609;
+  filter: drop-shadow(0 -2px 8px rgba(255, 120, 40, 0.55));
+}
+
+.map-art-lava-pool {
+  position: absolute;
+  left: -6%;
+  right: -6%;
+  bottom: -2%;
+  height: 26px;
+  background: linear-gradient(180deg, #ffb246 0%, #ff5a10 45%, #a31808 100%);
+  box-shadow:
+    0 -4px 16px rgba(255, 120, 40, 0.6),
+    inset 0 2px 0 rgba(255, 230, 180, 0.55);
+  border-radius: 6px 6px 0 0;
+  filter: blur(0.3px);
+}
+
+.map-art-ember {
+  position: absolute;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: #ffd47a;
+  box-shadow:
+    0 0 6px #ff9a33,
+    0 0 12px rgba(255, 130, 40, 0.75);
+  animation: ember-rise 3.5s ease-in infinite;
+}
+.map-art-ember-1 {
+  left: 22%;
+  bottom: 18%;
+  animation-delay: 0.1s;
+}
+.map-art-ember-2 {
+  left: 58%;
+  bottom: 22%;
+  animation-delay: 1.2s;
+  width: 2.5px;
+  height: 2.5px;
+}
+.map-art-ember-3 {
+  left: 78%;
+  bottom: 14%;
+  animation-delay: 2.1s;
+}
+
+@keyframes ember-rise {
+  0% {
+    transform: translate(0, 0) scale(1);
+    opacity: 0;
+  }
+  12% {
+    opacity: 1;
+  }
+  80% {
+    opacity: 0.85;
+  }
+  100% {
+    transform: translate(-4px, -70px) scale(0.4);
+    opacity: 0;
+  }
+}
+
+.map-art-stars {
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(1px 1px at 12% 22%, #ffffff 100%, transparent),
+    radial-gradient(1px 1px at 38% 14%, #dfe7ff 100%, transparent),
+    radial-gradient(1.3px 1.3px at 64% 30%, #ffffff 100%, transparent),
+    radial-gradient(1px 1px at 82% 18%, #e8f0ff 100%, transparent),
+    radial-gradient(1px 1px at 28% 58%, #ffffff 100%, transparent),
+    radial-gradient(1.2px 1.2px at 75% 54%, #cce0ff 100%, transparent);
+  opacity: 0.75;
+}
+
+/* Asteroid map preview */
+.map-art-asteroid {
+  position: absolute;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 30% 30%, #7a6e88 0%, #3b3345 70%, #1a1322 100%);
+  box-shadow: inset -2px -2px 5px rgba(0, 0, 0, 0.5);
+}
+.map-art-asteroid-1 {
+  width: 34px; height: 22px;
+  left: 22%; bottom: 16%;
+  transform: rotate(-12deg);
+}
+.map-art-asteroid-2 {
+  width: 46px; height: 30px;
+  left: 48%; bottom: 8%;
+  transform: rotate(8deg);
+}
+.map-art-asteroid-3 {
+  width: 26px; height: 18px;
+  left: 72%; bottom: 26%;
+  transform: rotate(-22deg);
+}
+.map-art-planet-ring {
+  position: absolute;
+  top: 12%;
+  right: 12%;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 35% 30%, #ffb37a 0%, #d95e2b 55%, #5b1a0a 100%);
+  box-shadow:
+    0 0 16px rgba(255, 130, 70, 0.35),
+    inset -3px -2px 6px rgba(0, 0, 0, 0.6);
+}
+.map-art-planet-ring::after {
+  content: "";
+  position: absolute;
+  inset: -6px -12px;
+  border-radius: 50%;
+  border: 3px solid rgba(255, 200, 140, 0.6);
+  transform: rotate(-18deg) scaleY(0.22);
+}
+
+/* Ice map preview */
+.map-art-aurora {
+  position: absolute;
+  top: 8%;
+  left: -10%;
+  right: -10%;
+  height: 40px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(120, 220, 200, 0.35) 25%,
+    rgba(160, 140, 255, 0.4) 55%,
+    rgba(120, 220, 200, 0.3) 80%,
+    transparent 100%
+  );
+  filter: blur(10px);
+  opacity: 0.9;
+}
+
+.map-art-cliff {
+  position: absolute;
+  left: -4%;
+  right: -4%;
+  border-top: 1px solid rgba(230, 245, 255, 0.55);
+  background: linear-gradient(180deg, #dde9f5 0%, #7aa3c9 100%);
+  box-shadow: 0 -1px 0 rgba(255, 255, 255, 0.5) inset;
+}
+.map-art-cliff-back {
+  bottom: 36%;
+  height: 22px;
+  clip-path: polygon(
+    0 100%, 0 40%, 14% 40%, 14% 18%, 38% 18%, 38% 45%,
+    62% 45%, 62% 25%, 85% 25%, 85% 55%, 100% 55%, 100% 100%
+  );
+  opacity: 0.75;
+}
+.map-art-cliff-mid {
+  bottom: 20%;
+  height: 26px;
+  clip-path: polygon(
+    0 100%, 0 55%, 22% 55%, 22% 28%, 48% 28%, 48% 55%,
+    72% 55%, 72% 38%, 100% 38%, 100% 100%
+  );
+  opacity: 0.9;
+}
+.map-art-cliff-front {
+  bottom: 0;
+  height: 34px;
+  clip-path: polygon(
+    0 100%, 0 55%, 18% 55%, 18% 30%, 42% 30%, 42% 60%,
+    66% 60%, 66% 45%, 88% 45%, 88% 70%, 100% 70%, 100% 100%
+  );
+  background: linear-gradient(180deg, #eef6fc 0%, #6a96be 100%);
+}
+
+.map-art-shard {
+  position: absolute;
+  width: 0;
+  height: 0;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-bottom: 22px solid #dff0fa;
+  filter: drop-shadow(0 0 6px rgba(170, 220, 255, 0.55));
+  opacity: 0.9;
+}
+.map-art-shard-1 {
+  left: 32%;
+  bottom: 52%;
+}
+.map-art-shard-2 {
+  left: 68%;
+  bottom: 60%;
+  border-bottom-width: 16px;
+  border-left-width: 4px;
+  border-right-width: 4px;
+}
+
+.map-card-info {
+  padding: 12px 14px 14px;
+  text-align: center;
+  border-top: 1px solid rgba(140, 170, 255, 0.15);
+  background: linear-gradient(180deg, rgba(12, 10, 30, 0.45) 0%, rgba(8, 6, 20, 0.7) 100%);
+}
+
+.map-card-name {
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  background: linear-gradient(90deg, #bcd9ff 0%, #d7b4ff 60%, #ffb2de 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.map-card-blurb {
+  margin-top: 4px;
+  font-size: 11px;
+  color: #9aa2c6;
+  letter-spacing: 0.04em;
+  line-height: 1.35;
+}
+
+.map-card.is-selected .character-card-glow {
   opacity: 0.55;
   animation: pulse-glow 2.8s ease-in-out infinite;
 }

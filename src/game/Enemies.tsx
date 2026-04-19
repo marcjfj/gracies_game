@@ -1,6 +1,7 @@
 import {
   CapsuleCollider,
   RigidBody,
+  useRapier,
   type RapierRigidBody,
 } from "@react-three/rapier";
 import { useFrame } from "@react-three/fiber";
@@ -26,7 +27,6 @@ import {
   registerEnemyHitHandler,
   unregisterEnemyHitHandler,
 } from "./enemyRegistry";
-import { sampleTerrainHeight } from "./Ground";
 
 const LABUBU_URL = "/labubu/glb/model.glb";
 
@@ -38,13 +38,21 @@ type EnemySpec = {
 const MAX_HP = 60;
 const WALK_SPEED = 2.4;
 const CHARGE_SPEED = 6;
-const DETECT_RADIUS = 14;
-const LOSE_RADIUS = 22;
+const DETECT_RADIUS = 28;
+const LOSE_RADIUS = 40;
 const WANDER_RADIUS = 10;
 const WANDER_PICK_DIST = 1.5;
 const CONTACT_RADIUS = 1.9;
 const CONTACT_DAMAGE = 8;
 const CONTACT_COOLDOWN = 0.6;
+
+const JUMP_VELOCITY = 10;
+const JUMP_COOLDOWN = 0.5;
+const OBSTACLE_RAY_DIST = 1.4;
+const OBSTACLE_LOW_Y = 0.55;
+const OBSTACLE_HIGH_Y = 2.3;
+const GROUND_RAY_LENGTH = 0.25;
+const AVOID_PROBE_ANGLE = Math.PI / 4;
 
 const MODEL_SCALE = 3.5;
 const MODEL_Y_OFFSET = 1.7;
@@ -67,30 +75,24 @@ const HIT_GLOW_COLOR = new Color("#9fe8ff");
 const HIT_GLOW_INTENSITY = 4;
 const _colorTmp = new Color();
 
-function ground(x: number, z: number, lift: number): [number, number, number] {
-  return [x, sampleTerrainHeight(x, z) + lift, z];
-}
-
-const ENEMIES: EnemySpec[] = [
-  { id: 0, spawn: ground(22, 8, 2) },
-  { id: 1, spawn: ground(-20, -14, 2) },
-  { id: 2, spawn: ground(10, 26, 2) },
-  { id: 3, spawn: ground(-24, 4, 2) },
-  { id: 4, spawn: ground(28, -20, 2) },
-];
-
 type Props = {
+  spawns: readonly [number, number, number][];
   playerRef: RefObject<RapierRigidBody>;
   onPlayerDamage: (amount: number) => void;
 };
 
-export function Enemies({ playerRef, onPlayerDamage }: Props) {
+export function Enemies({ spawns, playerRef, onPlayerDamage }: Props) {
   const damageRef = useRef(onPlayerDamage);
   damageRef.current = onPlayerDamage;
 
+  const specs = useMemo<EnemySpec[]>(
+    () => spawns.map((spawn, id) => ({ id, spawn: [...spawn] as [number, number, number] })),
+    [spawns],
+  );
+
   return (
     <>
-      {ENEMIES.map((spec) => (
+      {specs.map((spec) => (
         <Enemy
           key={spec.id}
           spec={spec}
@@ -151,12 +153,15 @@ function useLabubuInstance() {
 }
 
 function Enemy({ spec, playerRef, damageRef }: EnemyProps) {
+  const { world, rapier } = useRapier();
   const rbRef = useRef<RapierRigidBody>(null);
   const [alive, setAlive] = useState(true);
   const hpRef = useRef(MAX_HP);
   const flashRef = useRef(0);
   const chargeRef = useRef(false);
   const contactCooldownRef = useRef(0);
+  const jumpCooldownRef = useRef(0);
+  const avoidDirRef = useRef(0);
   const wanderTargetRef = useRef<[number, number]>([
     spec.spawn[0] + (Math.random() - 0.5) * 6,
     spec.spawn[2] + (Math.random() - 0.5) * 6,
@@ -234,14 +239,55 @@ function Enemy({ spec, playerRef, damageRef }: EnemyProps) {
     const moveDx = targetX - t.x;
     const moveDz = targetZ - t.z;
     const moveDist = Math.hypot(moveDx, moveDz);
-    let vx = 0;
-    let vz = 0;
+    let dirX = 0;
+    let dirZ = 0;
     if (moveDist > 0.1) {
-      vx = (moveDx / moveDist) * speed;
-      vz = (moveDz / moveDist) * speed;
+      dirX = moveDx / moveDist;
+      dirZ = moveDz / moveDist;
     }
 
+    jumpCooldownRef.current = Math.max(0, jumpCooldownRef.current - dt);
     const vel = rb.linvel();
+    const grounded = isGroundedBelow(rb, world, rapier, t);
+
+    const lowBlocked =
+      (dirX !== 0 || dirZ !== 0) &&
+      castObstacleRay(rb, world, rapier, t, dirX, dirZ, OBSTACLE_LOW_Y);
+    const highBlocked =
+      lowBlocked &&
+      castObstacleRay(rb, world, rapier, t, dirX, dirZ, OBSTACLE_HIGH_Y);
+
+    if (lowBlocked && !highBlocked && grounded && jumpCooldownRef.current <= 0) {
+      rb.setLinvel({ x: vel.x, y: JUMP_VELOCITY, z: vel.z }, true);
+      jumpCooldownRef.current = JUMP_COOLDOWN;
+    }
+
+    if (lowBlocked && highBlocked && grounded) {
+      if (avoidDirRef.current === 0) {
+        const leftBlocked = castObstacleRay(
+          rb,
+          world,
+          rapier,
+          t,
+          dirX * Math.cos(AVOID_PROBE_ANGLE) - dirZ * Math.sin(AVOID_PROBE_ANGLE),
+          dirX * Math.sin(AVOID_PROBE_ANGLE) + dirZ * Math.cos(AVOID_PROBE_ANGLE),
+          OBSTACLE_LOW_Y,
+        );
+        avoidDirRef.current = leftBlocked ? -1 : 1;
+      }
+      const a = AVOID_PROBE_ANGLE * avoidDirRef.current;
+      const cs = Math.cos(a);
+      const sn = Math.sin(a);
+      const nx = dirX * cs - dirZ * sn;
+      const nz = dirX * sn + dirZ * cs;
+      dirX = nx;
+      dirZ = nz;
+    } else {
+      avoidDirRef.current = 0;
+    }
+
+    const vx = dirX * speed;
+    const vz = dirZ * speed;
     rb.setLinvel({ x: vx, y: vel.y, z: vz }, true);
 
     if (vx !== 0 || vz !== 0) {
@@ -391,3 +437,50 @@ function Enemy({ spec, playerRef, damageRef }: EnemyProps) {
 }
 
 useGLTF.preload(LABUBU_URL);
+
+type RapierWorld = ReturnType<typeof useRapier>["world"];
+type RapierModule = ReturnType<typeof useRapier>["rapier"];
+
+function castObstacleRay(
+  body: RapierRigidBody,
+  world: RapierWorld,
+  rapier: RapierModule,
+  t: { x: number; y: number; z: number },
+  dirX: number,
+  dirZ: number,
+  yOffset: number,
+): boolean {
+  const origin = { x: t.x, y: t.y + yOffset, z: t.z };
+  const ray = new rapier.Ray(origin, { x: dirX, y: 0, z: dirZ });
+  const hit = world.castRay(
+    ray,
+    OBSTACLE_RAY_DIST,
+    true,
+    undefined,
+    undefined,
+    undefined,
+    body,
+  );
+  return hit !== null && hit.timeOfImpact <= OBSTACLE_RAY_DIST;
+}
+
+function isGroundedBelow(
+  body: RapierRigidBody,
+  world: RapierWorld,
+  rapier: RapierModule,
+  t: { x: number; y: number; z: number },
+): boolean {
+  const origin = { x: t.x, y: t.y + 0.1, z: t.z };
+  const ray = new rapier.Ray(origin, { x: 0, y: -1, z: 0 });
+  const maxDist = GROUND_RAY_LENGTH + 0.1;
+  const hit = world.castRay(
+    ray,
+    maxDist,
+    true,
+    undefined,
+    undefined,
+    undefined,
+    body,
+  );
+  return hit !== null && hit.timeOfImpact <= maxDist;
+}

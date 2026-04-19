@@ -1,6 +1,8 @@
 import { Stars } from "@react-three/drei";
+import { useQuality } from "../quality";
 
 export function FireScene() {
+  const { settings } = useQuality();
   return (
     <>
       <Stars
@@ -18,8 +20,8 @@ export function FireScene() {
         position={[22, 42, 18]}
         intensity={1.5}
         color="#ffd8a8"
-        castShadow
-        shadow-mapSize={[2048, 2048]}
+        castShadow={settings.shadows}
+        shadow-mapSize={[settings.shadowMapSize, settings.shadowMapSize]}
         shadow-camera-left={-55}
         shadow-camera-right={55}
         shadow-camera-top={55}

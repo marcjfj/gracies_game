@@ -20,6 +20,7 @@ import { Laser } from "./Laser";
 import { Enemies } from "./Enemies";
 import { requestPointerLock } from "../mouseLook";
 import { MAPS, type MapId } from "./Maps";
+import { QualityContext, useQuality } from "../quality";
 
 const debug = new URLSearchParams(window.location.search).has("debug");
 
@@ -55,6 +56,9 @@ export function Game({
   const cfg = MAPS[map];
   const spawn: [number, number, number] = cfg.spawn ?? [0, SPAWN_Y_LIFT, 0];
   const showSpawnPlatform = cfg.showSpawnPlatform ?? true;
+  const quality = useQuality();
+  const { settings } = quality;
+  const fogFar = cfg.fogFar * settings.fogFarMultiplier;
 
   const [bursts, setBursts] = useState<Burst[]>([]);
   const burstIdRef = useRef(0);
@@ -90,9 +94,15 @@ export function Game({
       style={{ position: "absolute", inset: 0 }}
     >
       <KeyboardControls map={keyMap}>
-        <Canvas shadows camera={{ fov: 60, position: [0, 7, 12], near: 0.1, far: 500 }}>
+        <Canvas
+          shadows={settings.shadows}
+          dpr={[1, settings.dprMax]}
+          gl={{ antialias: settings.antialias }}
+          camera={{ fov: 60, position: [0, 7, 12], near: 0.1, far: 500 }}
+        >
           <color attach="background" args={[cfg.background]} />
-          <fog attach="fog" args={[cfg.fogColor, cfg.fogNear, cfg.fogFar]} />
+          <fog attach="fog" args={[cfg.fogColor, cfg.fogNear, fogFar]} />
+          <QualityContext.Provider value={quality}>
           <Suspense fallback={null}>
             <MapScene />
             <Physics debug={debug} gravity={[0, -20, 0]}>
@@ -132,6 +142,7 @@ export function Game({
             ))}
             <FollowCamera target={playerRef} />
           </Suspense>
+          </QualityContext.Provider>
         </Canvas>
       </KeyboardControls>
     </div>

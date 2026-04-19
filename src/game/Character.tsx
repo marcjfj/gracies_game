@@ -181,7 +181,8 @@ export function Character({ character, animation, yOffset = 0, scale = 0.08 }: P
   );
 }
 
-for (const cfg of Object.values(CHARACTERS)) {
+export function preloadCharacter(id: CharacterId) {
+  const cfg = CHARACTERS[id];
   useGLTF.preload(cfg.baseUrl);
   for (const url of Object.values(cfg.animUrls)) useGLTF.preload(url);
 }

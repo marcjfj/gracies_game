@@ -6,6 +6,7 @@ import {
   CHARACTERS,
   CHARACTER_ORDER,
   Character,
+  preloadCharacter,
   type CharacterId,
 } from "../game/Character";
 import { MAPS, MAP_ORDER, type MapId } from "../game/Maps";
@@ -253,6 +254,8 @@ function CharacterCard({ id, selected, onSelect }: CardProps) {
       aria-checked={selected}
       className={`character-card${selected ? " is-selected" : ""}`}
       onClick={() => onSelect(id)}
+      onMouseEnter={() => preloadCharacter(id)}
+      onFocus={() => preloadCharacter(id)}
     >
       <div className="character-card-canvas">
         <Canvas

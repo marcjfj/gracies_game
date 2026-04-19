@@ -1,6 +1,8 @@
 import { Stars } from "@react-three/drei";
+import { useQuality } from "../quality";
 
 export function IceScene() {
+  const { settings } = useQuality();
   return (
     <>
       <Stars
@@ -18,8 +20,8 @@ export function IceScene() {
         position={[30, 40, 20]}
         intensity={2.1}
         color="#f6fbff"
-        castShadow
-        shadow-mapSize={[2048, 2048]}
+        castShadow={settings.shadows}
+        shadow-mapSize={[settings.shadowMapSize, settings.shadowMapSize]}
         shadow-camera-left={-55}
         shadow-camera-right={55}
         shadow-camera-top={55}

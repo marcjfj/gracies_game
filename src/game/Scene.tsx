@@ -1,6 +1,8 @@
 import { Stars } from "@react-three/drei";
+import { useQuality } from "../quality";
 
 export function Scene() {
+  const { settings } = useQuality();
   return (
     <>
       <Stars
@@ -18,8 +20,8 @@ export function Scene() {
         position={[25, 35, 15]}
         intensity={1.9}
         color="#f4f6ff"
-        castShadow
-        shadow-mapSize={[2048, 2048]}
+        castShadow={settings.shadows}
+        shadow-mapSize={[settings.shadowMapSize, settings.shadowMapSize]}
         shadow-camera-left={-50}
         shadow-camera-right={50}
         shadow-camera-top={50}

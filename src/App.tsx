@@ -1,17 +1,19 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Game } from "./game/Game";
 import { getMapCrystalCount, type MapId } from "./game/Maps";
-import type { CharacterId } from "./game/Character";
+import { preloadCharacter, type CharacterId } from "./game/Character";
 import { StartScreen } from "./ui/StartScreen";
 import { WinScreen } from "./ui/WinScreen";
 import { LostScreen } from "./ui/LostScreen";
 import { useBackgroundMusic } from "./ui/useBackgroundMusic";
 import { useSoundEffect } from "./ui/useSoundEffect";
 import { MusicToggle } from "./ui/MusicToggle";
+import { QualityToggle } from "./ui/QualityToggle";
 import { TouchControls } from "./ui/TouchControls";
 import { CROSSHAIR_TOP_PERCENT } from "./crosshair";
 import { emitPlayerHitFlash } from "./playerFlash";
 import { isTouchDevice } from "./touch";
+import { QualityProvider, useQuality } from "./quality";
 
 type Phase = "start" | "playing" | "won" | "lost";
 
@@ -19,6 +21,15 @@ const MAX_HEALTH = 100;
 const TOUCH = isTouchDevice();
 
 export default function App() {
+  return (
+    <QualityProvider>
+      <AppInner />
+    </QualityProvider>
+  );
+}
+
+function AppInner() {
+  const { tier, setTier } = useQuality();
   const [phase, setPhase] = useState<Phase>("start");
   const [collected, setCollected] = useState<ReadonlySet<number>>(() => new Set());
   const [character, setCharacter] = useState<CharacterId>("poodle");
@@ -82,13 +93,14 @@ export default function App() {
   mutedRef.current = music.muted;
 
   const startGame = useCallback(() => {
+    preloadCharacter(character);
     setCollected(new Set());
     setHealth(MAX_HEALTH);
     setActiveMap(selectedMap);
     setGameKey((k) => k + 1);
     setPhase("playing");
     music.play();
-  }, [music, selectedMap]);
+  }, [music, selectedMap, character]);
 
   const returnToStart = useCallback(() => {
     setPhase("start");
@@ -175,7 +187,10 @@ export default function App() {
         <LostScreen onRetry={startGame} onBackToStart={returnToStart} />
       )}
       {phase !== "start" && (
-        <MusicToggle muted={music.muted} onToggle={music.toggleMute} />
+        <>
+          <MusicToggle muted={music.muted} onToggle={music.toggleMute} />
+          <QualityToggle tier={tier} onChange={setTier} />
+        </>
       )}
       {phase === "playing" && TOUCH && <TouchControls />}
     </div>

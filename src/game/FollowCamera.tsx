@@ -4,7 +4,7 @@ import { useRef, type RefObject } from "react";
 import { Vector3 } from "three";
 import { readGamepad } from "../gamepad";
 import { readMouseDelta } from "../mouseLook";
-import { readTouchLookDelta } from "../touch";
+import { readTouchLookDelta, readTouchLookRate } from "../touch";
 
 type Props = {
   target: RefObject<RapierRigidBody>;
@@ -19,6 +19,8 @@ const MOUSE_YAW_SENS = 0.0022;
 const MOUSE_PITCH_SENS = 0.0022;
 const TOUCH_YAW_SENS = 0.0048;
 const TOUCH_PITCH_SENS = 0.0048;
+const TOUCH_LOOK_YAW_RATE = 2.6;
+const TOUCH_LOOK_PITCH_RATE = 1.9;
 const PITCH_MIN = -0.9;
 const PITCH_MAX = 1.2;
 const AIM_LOOKAT_BIAS_Y = 3.2;
@@ -53,6 +55,11 @@ export function FollowCamera({ target, offset = [0, 7, 12], lerp = 0.08 }: Props
     if (td.dx !== 0 || td.dy !== 0) {
       yaw.current -= td.dx * TOUCH_YAW_SENS;
       pitch.current += td.dy * TOUCH_PITCH_SENS;
+    }
+    const tr = readTouchLookRate();
+    if (tr.x !== 0 || tr.y !== 0) {
+      yaw.current -= tr.x * TOUCH_LOOK_YAW_RATE * dt;
+      pitch.current += tr.y * TOUCH_LOOK_PITCH_RATE * dt;
     }
     const pitchMin = PITCH_MIN - basePitch.current;
     const pitchMax = PITCH_MAX - basePitch.current;

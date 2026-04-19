@@ -8,6 +8,8 @@ export type TouchInput = {
 const state: TouchInput = { moveX: 0, moveY: 0, jump: false, fire: false };
 let lookDx = 0;
 let lookDy = 0;
+let lookRateX = 0;
+let lookRateY = 0;
 
 export function readTouchInput(): TouchInput {
   return { ...state };
@@ -20,6 +22,10 @@ export function readTouchLookDelta(): { dx: number; dy: number } {
   return out;
 }
 
+export function readTouchLookRate(): { x: number; y: number } {
+  return { x: lookRateX, y: lookRateY };
+}
+
 export function setTouchMove(x: number, y: number) {
   state.moveX = x;
   state.moveY = y;
@@ -28,6 +34,11 @@ export function setTouchMove(x: number, y: number) {
 export function addTouchLook(dx: number, dy: number) {
   lookDx += dx;
   lookDy += dy;
+}
+
+export function setTouchLookRate(x: number, y: number) {
+  lookRateX = x;
+  lookRateY = y;
 }
 
 export function setTouchJump(pressed: boolean) {

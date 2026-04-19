@@ -18,6 +18,7 @@ import {
 import type { ControlName } from "../controls";
 import { readGamepad } from "../gamepad";
 import { isMouseFiring } from "../mouseLook";
+import { readTouchInput } from "../touch";
 import { CROSSHAIR_NDC_Y } from "../crosshair";
 import { reportEnemyHit, type EnemyUserData } from "./enemyRegistry";
 
@@ -115,7 +116,9 @@ export function Laser({ playerRef, muted = false }: Props) {
 
     const keys = get();
     const gp = readGamepad();
-    const firing = keys.fire || (gp.connected && gp.fire) || isMouseFiring();
+    const ti = readTouchInput();
+    const firing =
+      keys.fire || (gp.connected && gp.fire) || isMouseFiring() || ti.fire;
 
     if (firing !== wasFiringRef.current) {
       const audio = firingAudioRef.current;

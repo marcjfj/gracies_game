@@ -9,13 +9,14 @@ import { useBackgroundMusic } from "./ui/useBackgroundMusic";
 import { useSoundEffect } from "./ui/useSoundEffect";
 import { MusicToggle } from "./ui/MusicToggle";
 import { QualityToggle } from "./ui/QualityToggle";
+import { LoadingScreen } from "./ui/LoadingScreen";
 import { TouchControls } from "./ui/TouchControls";
 import { CROSSHAIR_TOP_PERCENT } from "./crosshair";
 import { emitPlayerHitFlash } from "./playerFlash";
 import { isTouchDevice } from "./touch";
 import { QualityProvider, useQuality } from "./quality";
 
-type Phase = "start" | "playing" | "won" | "lost";
+type Phase = "start" | "loading" | "playing" | "won" | "lost";
 
 const MAX_HEALTH = 100;
 const TOUCH = isTouchDevice();
@@ -93,14 +94,21 @@ function AppInner() {
   mutedRef.current = music.muted;
 
   const startGame = useCallback(() => {
-    preloadCharacter(character);
     setCollected(new Set());
     setHealth(MAX_HEALTH);
     setActiveMap(selectedMap);
+    setPhase("loading");
+  }, [selectedMap]);
+
+  const prepareLoad = useCallback(() => {
+    preloadCharacter(character);
+  }, [character]);
+
+  const handleLoadingReady = useCallback(() => {
     setGameKey((k) => k + 1);
     setPhase("playing");
     music.play();
-  }, [music, selectedMap, character]);
+  }, [music]);
 
   const returnToStart = useCallback(() => {
     setPhase("start");
@@ -110,10 +118,11 @@ function AppInner() {
 
   const collectedCount = collected.size;
   const remaining = crystalTotal - collectedCount;
+  const inGame = phase === "playing" || phase === "won" || phase === "lost";
 
   return (
     <div className={`app${TOUCH ? " is-touch" : ""}`}>
-      {phase !== "start" && (
+      {inGame && (
         <>
           <Game
             key={gameKey}
@@ -182,11 +191,14 @@ function AppInner() {
           onSelectMap={setSelectedMap}
         />
       )}
+      {phase === "loading" && (
+        <LoadingScreen prepare={prepareLoad} onReady={handleLoadingReady} />
+      )}
       {phase === "won" && <WinScreen onBackToStart={returnToStart} />}
       {phase === "lost" && (
         <LostScreen onRetry={startGame} onBackToStart={returnToStart} />
       )}
-      {phase !== "start" && (
+      {inGame && (
         <>
           <MusicToggle muted={music.muted} onToggle={music.toggleMute} />
           <QualityToggle tier={tier} onChange={setTier} />

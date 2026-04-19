@@ -34,6 +34,14 @@ body,
   z-index: 7;
 }
 
+.app.is-touch .hud-health {
+  top: 14px;
+  bottom: auto;
+  left: 14px;
+  right: auto;
+  min-width: 0;
+}
+
 .touch-look {
   position: absolute;
   inset: 0;

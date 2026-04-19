@@ -4,6 +4,7 @@ export const controlMap = [
   { name: "left", keys: ["ArrowLeft", "KeyA"] },
   { name: "right", keys: ["ArrowRight", "KeyD"] },
   { name: "jump", keys: ["Space"] },
+  { name: "fire", keys: ["KeyF"] },
 ] as const;
 
 export type ControlName = (typeof controlMap)[number]["name"];

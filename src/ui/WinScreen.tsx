@@ -1,6 +1,11 @@
-type Props = { onPlayAgain: () => void };
+import { useGamepadButtonPress } from "../gamepad";
 
-export function WinScreen({ onPlayAgain }: Props) {
+const SUBMIT_BUTTONS = [0, 9] as const;
+
+type Props = { onBackToStart: () => void };
+
+export function WinScreen({ onBackToStart }: Props) {
+  useGamepadButtonPress(SUBMIT_BUTTONS, onBackToStart);
   return (
     <div className="win-screen">
       <div className="win-burst" />
@@ -11,10 +16,10 @@ export function WinScreen({ onPlayAgain }: Props) {
         <p className="win-sub">
           Every crystal collected. Gracie is officially a cosmic hero.
         </p>
-        <button className="play-button" onClick={onPlayAgain} type="button">
+        <button className="play-button" onClick={onBackToStart} type="button">
           <span className="play-button-inner">
-            <span className="play-glyph">↻</span>
-            <span>Play Again</span>
+            <span className="play-glyph">↩</span>
+            <span>Back to Start</span>
           </span>
           <span className="play-button-glow" aria-hidden />
         </button>
